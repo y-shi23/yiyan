@@ -1,0 +1,11 @@
+{
+    "main": "index.html",
+    "logo": "logo.png",
+    "features": [
+      {
+        "code": "一言",
+        "explain": "一言",
+        "cmds": ["美好", "yy", "一言"]
+      }
+    ]
+  }

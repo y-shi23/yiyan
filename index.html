@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一言</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @font-face {
+            font-family: 'LXGW WenKai';
+            src: url('https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.1.0/style/LXGWWenKai-Regular.woff2') format('woff2');
+        }
+
+        body {
+            font-family: "LXGW WenKai", "PingFang SC", "Microsoft YaHei", sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 1s ease;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 
+                0 4px 6px rgba(32, 33, 36, 0.08),
+                0 1px 3px rgba(32, 33, 36, 0.12);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 12px rgba(32, 33, 36, 0.08),
+                0 2px 4px rgba(32, 33, 36, 0.12);
+        }
+
+        .hitokoto-text {
+            font-size: 1.75rem;
+            font-weight: 500;
+            line-height: 1.7;
+            margin: 2rem 0;
+            color: #34495e;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        .hitokoto-from {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-top: 1.5rem;
+            opacity: 0;
+            animation: fadeIn 0.8s ease 0.3s forwards;
+        }
+
+        .refresh-btn {
+            margin-top: 2.5rem;
+            padding: 0.8rem 2.2rem;
+            border: none;
+            background: #42b983;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .refresh-btn:hover {
+            background: #3aa876;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 185, 131, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            display: none;
+            width: 40px;
+            height: 40px;
+            margin: 2rem auto;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 修改默认渐变色 */
+        .gradient-bg {
+            background: linear-gradient(
+                140deg,
+                #e6e9f0 0%,
+                #eef1f5 100%
+            );
+        }
+
+        .settings-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .settings-btn:hover {
+            opacity: 1;
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 1000;
+            max-width: 90%;
+            width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .settings-section {
+            margin: 1.5rem 0;
+        }
+
+        .settings-section h4 {
+            margin-bottom: 1rem;
+            color: #34495e;
+        }
+
+        .sentence-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .sentence-types label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .background-settings {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .setting-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .upload-btn, .reset-bg {
+            padding: 0.5rem 1rem;
+            border: 1px solid #42b983;
+            border-radius: 4px;
+            background: white;
+            color: #42b983;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-btn:hover, .reset-bg:hover {
+            background: #42b983;
+            color: white;
+        }
+
+        .close-settings {
+            width: 100%;
+            padding: 0.8rem;
+            background: #42b983;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        /* 收藏相关样式 */
+        .top-right-buttons {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        .favorite-btn, .library-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .favorite-btn:hover, .library-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .favorite-btn.active {
+            color: #ff4757;
+        }
+
+        /* 句子库面板样式 */
+        .library-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(8px);
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+            width: 95%;
+            height: 90vh;
+            max-width: 1200px;
+            overflow-y: auto;
+        }
+
+        .library-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+            padding: 0.5rem;
+        }
+
+        .library-item {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .library-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .library-item p {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        .library-item small {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            display: block;
+            margin-top: auto;
+        }
+
+        .library-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .library-header h3 {
+            color: #34495e;
+            font-size: 1.5rem;
+        }
+
+        .close-library {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .close-library:hover {
+            opacity: 1;
+            background: rgba(0,0,0,0.05);
+        }
+
+        .empty-library {
+            text-align: center;
+            color: #94a3b8;
+            padding: 4rem 2rem;
+            font-size: 1.2rem;
+        }
+
+        .copy-icon {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 20px;
+            height: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .copy-icon::before {
+            content: '✓';
+            color: #42b983;
+            font-size: 1.2rem;
+        }
+
+        @keyframes copyAnimation {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            20% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+            40% {
+                transform: scale(0.95);
+            }
+            60% {
+                transform: scale(1);
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1);
+            }
+        }
+
+        .copy-icon.show {
+            animation: copyAnimation 1.5s ease forwards;
+        }
+
+        .image-settings {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .image-settings.show {
+            display: block;
+        }
+
+        .slider-container {
+            margin: 1rem 0;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .slider-container input[type="range"] {
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+
+        .slider-value {
+            font-size: 0.8rem;
+            color: #666;
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-right-buttons">
+        <button class="favorite-btn" title="收藏当前句子">🤍</button>
+        <button class="library-btn" title="查看句子库">📚</button>
+    </div>
+
+    <div class="container">
+        <div class="loading"></div>
+        <div class="hitokoto-text"></div>
+        <div class="hitokoto-from"></div>
+        <button class="refresh-btn">换一句</button>
+        <button class="settings-btn" title="设置">⚙️</button>
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="settings-panel">
+        <h3>设置</h3>
+        <div class="settings-section">
+            <h4>句子类型</h4>
+            <div class="sentence-types">
+                <label><input type="checkbox" value="a" checked> 动画</label>
+                <label><input type="checkbox" value="b"> 漫画</label>
+                <label><input type="checkbox" value="c"> 游戏</label>
+                <label><input type="checkbox" value="d"> 文学</label>
+                <label><input type="checkbox" value="e"> 原创</label>
+                <label><input type="checkbox" value="f"> 来自网络</label>
+                <label><input type="checkbox" value="g"> 其他</label>
+                <label><input type="checkbox" value="h"> 影视</label>
+                <label><input type="checkbox" value="i"> 诗词</label>
+                <label><input type="checkbox" value="k"> 哲学</label>
+                <label><input type="checkbox" value="l"> 抖机灵</label>
+            </div>
+        </div>
+        <div class="settings-section">
+            <h4>背景设置</h4>
+            <div class="background-settings">
+                <label class="setting-option">
+                    <input type="checkbox" id="useUnsplash"> 使用 Unsplash 随机图片
+                </label>
+                <label class="upload-btn">
+                    上传背景图片
+                    <input type="file" accept="image/*" id="bgUpload" hidden>
+                </label>
+                <button class="reset-bg">恢复默认背景</button>
+                <div class="image-settings">
+                    <div class="slider-container">
+                        <label>卡片透明度</label>
+                        <input type="range" id="cardOpacity" min="0" max="100" value="95">
+                        <span class="slider-value">95%</span>
+                    </div>
+                    <div class="slider-container">
+                        <label>卡片背景虚化</label>
+                        <input type="range" id="bgBlur" min="0" max="20" value="8">
+                        <span class="slider-value">8px</span>
+                    </div>
+                    <div class="slider-container">
+                        <label>背景图片虚化</label>
+                        <input type="range" id="imgBlur" min="0" max="20" value="0">
+                        <span class="slider-value">0px</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="close-settings">保存</button>
+    </div>
+
+    <!-- 句子库面板 -->
+    <div class="library-panel">
+        <div class="library-header">
+            <h3>我的句子库</h3>
+            <button class="close-library">×</button>
+        </div>
+        <div class="library-grid"></div>
+    </div>
+
+    <script>
+        const hitokotoText = document.querySelector('.hitokoto-text');
+        const hitokotoFrom = document.querySelector('.hitokoto-from');
+        const refreshBtn = document.querySelector('.refresh-btn');
+        const loading = document.querySelector('.loading');
+
+        function getRandomPastelColor() {
+            // 生成柔和的颜色
+            const hue = Math.floor(Math.random() * 360);
+            const saturation = 30 + Math.floor(Math.random() * 30); // 30-60%
+            const lightness = 85 + Math.floor(Math.random() * 10); // 85-95%
+            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        }
+
+        function updateGradient() {
+            const color1 = getRandomPastelColor();
+            const color2 = getRandomPastelColor();
+            const color3 = getRandomPastelColor();
+            
+            document.body.style.background = `
+                linear-gradient(
+                    140deg,
+                    #fff 10%,
+                    ${color1} 25%,
+                    ${color2} 50%,
+                    ${color3} 75%,
+                    #fff 90%
+                )
+            `;
+        }
+
+        async function fetchHitokoto() {
+            loading.style.display = 'block';
+            hitokotoText.style.display = 'none';
+            hitokotoFrom.style.display = 'none';
+            
+            await updateBackground();
+
+            try {
+                const selectedTypes = utools.dbStorage.getItem('sentence-types') || ['a'];
+                const typeParams = selectedTypes.map(type => `c=${type}`).join('&');
+                const url = `https://v1.hitokoto.cn/?${typeParams}&encode=json&charset=utf-8`;
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)',
+                        'Accept': 'application/json',
+                        'Referer': 'https://hitokoto.cn/'
+                    },
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                currentHitokoto = data; // 保存当前句子
+                updateFavoriteButton(); // 更新收藏按钮状态
+                
+                loading.style.display = 'none';
+                hitokotoText.style.display = 'block';
+                hitokotoFrom.style.display = 'block';
+
+                hitokotoText.style.opacity = '0';
+                hitokotoFrom.style.opacity = '0';
+                
+                setTimeout(() => {
+                    hitokotoText.textContent = data.hitokoto;
+                    hitokotoFrom.textContent = `——${data.from}${data.from_who ? ' · ' + data.from_who : ''}`;
+                    
+                    hitokotoText.style.animation = 'fadeIn 0.8s ease forwards';
+                    hitokotoFrom.style.animation = 'fadeIn 0.8s ease 0.3s forwards';
+                }, 100);
+
+            } catch (error) {
+                console.error('获取一言失败:', error);
+                hitokotoText.textContent = '获取句子失败，请稍后再试...';
+                loading.style.display = 'none';
+            }
+        }
+
+        // 页面加载时初始化渐变色
+        document.addEventListener('DOMContentLoaded', () => {
+            updateGradient();
+            fetchHitokoto();
+        });
+
+        refreshBtn.addEventListener('click', fetchHitokoto);
+
+        // 设置面板相关功能
+        const settingsBtn = document.querySelector('.settings-btn');
+        const settingsPanel = document.querySelector('.settings-panel');
+        const closeSettingsBtn = document.querySelector('.close-settings');
+        const bgUpload = document.querySelector('#bgUpload');
+        const resetBgBtn = document.querySelector('.reset-bg');
+        const checkboxes = document.querySelectorAll('.sentence-types input[type="checkbox"]');
+        const imageSettings = document.querySelector('.image-settings');
+        const cardOpacitySlider = document.getElementById('cardOpacity');
+        const bgBlurSlider = document.getElementById('bgBlur');
+        const imgBlurSlider = document.getElementById('imgBlur');
+        const container = document.querySelector('.container');
+
+        // 从本地存储加载设置
+        const savedCardOpacity = utools.dbStorage.getItem('card-opacity') || 95;
+        const savedBgBlur = utools.dbStorage.getItem('bg-blur') || 8;
+        const savedImgBlur = utools.dbStorage.getItem('img-blur') || 0;
+
+        // 初始化滑动条值
+        cardOpacitySlider.value = savedCardOpacity;
+        bgBlurSlider.value = savedBgBlur;
+        imgBlurSlider.value = savedImgBlur;
+        cardOpacitySlider.nextElementSibling.textContent = savedCardOpacity + '%';
+        bgBlurSlider.nextElementSibling.textContent = savedBgBlur + 'px';
+        imgBlurSlider.nextElementSibling.textContent = savedImgBlur + 'px';
+
+        // 应用保存的设置
+        function applySettings() {
+            container.style.background = `rgba(255, 255, 255, ${cardOpacitySlider.value / 100})`;
+            container.style.backdropFilter = `blur(${bgBlurSlider.value}px)`;
+            document.body.style.backdropFilter = `blur(${imgBlurSlider.value}px)`;
+        }
+
+        // 更新图片设置面板显示状态
+        function updateImageSettingsVisibility() {
+            const hasCustomBg = useUnsplash || savedBg;
+            imageSettings.classList.toggle('show', hasCustomBg);
+        }
+
+        // 打开/关闭设置面板
+        settingsBtn.addEventListener('click', () => {
+            settingsPanel.style.display = 'block';
+        });
+
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsPanel.style.display = 'none';
+        });
+
+        // 句子类型选择
+        checkboxes.forEach(checkbox => {
+            // 从本地存储加载选中状态
+            const savedTypes = utools.dbStorage.getItem('sentence-types') || ['a'];
+            checkbox.checked = savedTypes.includes(checkbox.value);
+
+            checkbox.addEventListener('change', () => {
+                const selectedTypes = Array.from(checkboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+                
+                if (selectedTypes.length === 0) {
+                    checkbox.checked = true;
+                    return;
+                }
+
+                // 保存选中的类型到本地存储
+                utools.dbStorage.setItem('sentence-types', selectedTypes);
+                // 重新获取一言
+                fetchHitokoto();
+            });
+        });
+
+        // 加载保存的背景图片
+        const savedBg = utools.dbStorage.getItem('background-image');
+        let useUnsplash = utools.dbStorage.getItem('use-unsplash') || false;
+        const unsplashCheckbox = document.getElementById('useUnsplash');
+
+        // Unsplash API 配置
+        const UNSPLASH_ACCESS_KEY = 'jNj9D9IbOozkb1v5Nw-0Nayi2TGcJJ0hf92A4_A5TNY';
+        
+        async function getUnsplashBackground() {
+            try {
+                const response = await fetch('https://api.unsplash.com/photos/random?orientation=landscape&query=nature,landscape&content_filter=high', {
+                    headers: {
+                        'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch Unsplash image');
+                }
+                
+                const data = await response.json();
+                return data.urls.regular;
+            } catch (error) {
+                console.error('获取 Unsplash 图片失败:', error);
+                return null;
+            }
+        }
+
+        async function updateBackground() {
+            if (useUnsplash) {
+                const imageUrl = await getUnsplashBackground();
+                if (imageUrl) {
+                    document.body.style.backgroundImage = `url(${imageUrl})`;
+                } else {
+                    updateGradient();
+                }
+            } else if (savedBg) {
+                document.body.style.backgroundImage = `url(${savedBg})`;
+            } else {
+                updateGradient();
+            }
+        }
+
+        // 初始化设置
+        unsplashCheckbox.checked = useUnsplash;
+        updateImageSettingsVisibility();
+        applySettings();
+
+        if (savedBg) {
+            document.body.style.backgroundImage = `url(${savedBg})`;
+        }
+
+        // 监听滑动条变化
+        cardOpacitySlider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            e.target.nextElementSibling.textContent = value + '%';
+            container.style.background = `rgba(255, 255, 255, ${value / 100})`;
+            utools.dbStorage.setItem('card-opacity', value);
+        });
+
+        bgBlurSlider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            e.target.nextElementSibling.textContent = value + 'px';
+            container.style.backdropFilter = `blur(${value}px)`;
+            utools.dbStorage.setItem('bg-blur', value);
+        });
+
+        imgBlurSlider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            e.target.nextElementSibling.textContent = value + 'px';
+            document.body.style.backdropFilter = `blur(${value}px)`;
+            utools.dbStorage.setItem('img-blur', value);
+        });
+
+        // 修改背景图片上传处理
+        bgUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.body.style.backgroundImage = `url(${e.target.result})`;
+                    utools.dbStorage.setItem('background-image', e.target.result);
+                    unsplashCheckbox.checked = false;
+                    useUnsplash = false;
+                    utools.dbStorage.setItem('use-unsplash', false);
+                    updateImageSettingsVisibility();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 修改 Unsplash 设置切换处理
+        unsplashCheckbox.addEventListener('change', (e) => {
+            useUnsplash = e.target.checked;
+            utools.dbStorage.setItem('use-unsplash', useUnsplash);
+            updateImageSettingsVisibility();
+            updateBackground();
+        });
+
+        // 修改重置背景按钮事件
+        resetBgBtn.addEventListener('click', () => {
+            document.body.style.backgroundImage = '';
+            utools.dbStorage.removeItem('background-image');
+            unsplashCheckbox.checked = false;
+            useUnsplash = false;
+            utools.dbStorage.setItem('use-unsplash', false);
+            updateImageSettingsVisibility();
+            updateGradient();
+        });
+
+        // 收藏功能相关代码
+        const favoriteBtn = document.querySelector('.favorite-btn');
+        const libraryBtn = document.querySelector('.library-btn');
+        const libraryPanel = document.querySelector('.library-panel');
+        const libraryGrid = document.querySelector('.library-grid');
+        const closeLibraryBtn = document.querySelector('.close-library');
+        let currentHitokoto = null;
+
+        // 从本地存储加载收藏的句子
+        function loadFavorites() {
+            return utools.dbStorage.getItem('favorite-hitokoto') || [];
+        }
+
+        // 保存收藏的句子到本地存储
+        function saveFavorites(favorites) {
+            utools.dbStorage.setItem('favorite-hitokoto', favorites);
+        }
+
+        // 更新收藏按钮状态
+        function updateFavoriteButton() {
+            if (!currentHitokoto) return;
+            const favorites = loadFavorites();
+            const isFavorited = favorites.some(f => f.hitokoto === currentHitokoto.hitokoto);
+            favoriteBtn.textContent = isFavorited ? '❤️' : '🤍';
+            favoriteBtn.classList.toggle('active', isFavorited);
+        }
+
+        // 渲染句子库
+        function renderLibrary() {
+            const favorites = loadFavorites();
+            libraryGrid.innerHTML = '';
+
+            if (favorites.length === 0) {
+                libraryGrid.innerHTML = '<div class="empty-library">还没有收藏任何句子哦~</div>';
+                return;
+            }
+
+            favorites.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'library-item';
+                div.innerHTML = `
+                    <p>${item.hitokoto}</p>
+                    <small>——${item.from}${item.from_who ? ' · ' + item.from_who : ''}</small>
+                    <div class="copy-icon"></div>
+                `;
+
+                div.addEventListener('click', () => {
+                    navigator.clipboard.writeText(item.hitokoto).then(() => {
+                        const copyIcon = div.querySelector('.copy-icon');
+                        copyIcon.classList.remove('show');
+                        // 触发重排以重新开始动画
+                        void copyIcon.offsetWidth;
+                        copyIcon.classList.add('show');
+                    });
+                });
+
+                libraryGrid.appendChild(div);
+            });
+        }
+
+        // 收藏/取消收藏句子
+        favoriteBtn.addEventListener('click', () => {
+            if (!currentHitokoto) return;
+
+            const favorites = loadFavorites();
+            const index = favorites.findIndex(f => f.hitokoto === currentHitokoto.hitokoto);
+
+            if (index === -1) {
+                favorites.push(currentHitokoto);
+            } else {
+                favorites.splice(index, 1);
+            }
+
+            saveFavorites(favorites);
+            updateFavoriteButton();
+            renderLibrary();
+        });
+
+        // 打开/关闭句子库
+        libraryBtn.addEventListener('click', () => {
+            libraryPanel.style.display = 'block';
+            renderLibrary();
+        });
+
+        closeLibraryBtn.addEventListener('click', () => {
+            libraryPanel.style.display = 'none';
+        });
+
+        // 点击面板外关闭面板
+        window.addEventListener('click', (e) => {
+            if (e.target === libraryPanel) {
+                libraryPanel.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

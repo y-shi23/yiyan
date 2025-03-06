@@ -548,7 +548,7 @@
             await updateBackground();
 
             try {
-                const selectedTypes = localStorage.getItem('sentence-types') || ['a'];
+                const selectedTypes = utools.dbStorage.getItem('sentence-types') || ['a'];
                 const typeParams = selectedTypes.map(type => `c=${type}`).join('&');
                 const url = `https://v1.hitokoto.cn/?${typeParams}&encode=json&charset=utf-8`;
                 
@@ -614,9 +614,9 @@
         const container = document.querySelector('.container');
 
         // 从本地存储加载设置
-        const savedCardOpacity = localStorage.getItem('card-opacity') || 95;
-        const savedBgBlur = localStorage.getItem('bg-blur') || 8;
-        const savedImgBlur = localStorage.getItem('img-blur') || 0;
+        const savedCardOpacity = utools.dbStorage.getItem('card-opacity') || 95;
+        const savedBgBlur = utools.dbStorage.getItem('bg-blur') || 8;
+        const savedImgBlur = utools.dbStorage.getItem('img-blur') || 0;
 
         // 初始化滑动条值
         cardOpacitySlider.value = savedCardOpacity;
@@ -651,7 +651,7 @@
         // 句子类型选择
         checkboxes.forEach(checkbox => {
             // 从本地存储加载选中状态
-            const savedTypes = localStorage.getItem('sentence-types') || ['a'];
+            const savedTypes = utools.dbStorage.getItem('sentence-types') || ['a'];
             checkbox.checked = savedTypes.includes(checkbox.value);
 
             checkbox.addEventListener('change', () => {
@@ -665,15 +665,15 @@
                 }
 
                 // 保存选中的类型到本地存储
-                localStorage.setItem('sentence-types', selectedTypes);
+                utools.dbStorage.setItem('sentence-types', selectedTypes);
                 // 重新获取一言
                 fetchHitokoto();
             });
         });
 
         // 加载保存的背景图片
-        const savedBg = localStorage.getItem('background-image');
-        let useUnsplash = localStorage.getItem('use-unsplash') || false;
+        const savedBg = utools.dbStorage.getItem('background-image');
+        let useUnsplash = utools.dbStorage.getItem('use-unsplash') || false;
         const unsplashCheckbox = document.getElementById('useUnsplash');
 
         // Unsplash API 配置
@@ -728,21 +728,21 @@
             const value = e.target.value;
             e.target.nextElementSibling.textContent = value + '%';
             container.style.background = `rgba(255, 255, 255, ${value / 100})`;
-            localStorage.setItem('card-opacity', value);
+            utools.dbStorage.setItem('card-opacity', value);
         });
 
         bgBlurSlider.addEventListener('input', (e) => {
             const value = e.target.value;
             e.target.nextElementSibling.textContent = value + 'px';
             container.style.backdropFilter = `blur(${value}px)`;
-            localStorage.setItem('bg-blur', value);
+            utools.dbStorage.setItem('bg-blur', value);
         });
 
         imgBlurSlider.addEventListener('input', (e) => {
             const value = e.target.value;
             e.target.nextElementSibling.textContent = value + 'px';
             document.body.style.backdropFilter = `blur(${value}px)`;
-            localStorage.setItem('img-blur', value);
+            utools.dbStorage.setItem('img-blur', value);
         });
 
         // 修改背景图片上传处理
@@ -752,10 +752,10 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     document.body.style.backgroundImage = `url(${e.target.result})`;
-                    localStorage.setItem('background-image', e.target.result);
+                    utools.dbStorage.setItem('background-image', e.target.result);
                     unsplashCheckbox.checked = false;
                     useUnsplash = false;
-                    localStorage.setItem('use-unsplash', false);
+                    utools.dbStorage.setItem('use-unsplash', false);
                     updateImageSettingsVisibility();
                 };
                 reader.readAsDataURL(file);
@@ -765,7 +765,7 @@
         // 修改 Unsplash 设置切换处理
         unsplashCheckbox.addEventListener('change', (e) => {
             useUnsplash = e.target.checked;
-            localStorage.setItem('use-unsplash', useUnsplash);
+            utools.dbStorage.setItem('use-unsplash', useUnsplash);
             updateImageSettingsVisibility();
             updateBackground();
         });
@@ -773,10 +773,10 @@
         // 修改重置背景按钮事件
         resetBgBtn.addEventListener('click', () => {
             document.body.style.backgroundImage = '';
-            localStorage.removeItem('background-image');
+            utools.dbStorage.removeItem('background-image');
             unsplashCheckbox.checked = false;
             useUnsplash = false;
-            localStorage.setItem('use-unsplash', false);
+            utools.dbStorage.setItem('use-unsplash', false);
             updateImageSettingsVisibility();
             updateGradient();
         });
@@ -791,12 +791,12 @@
 
         // 从本地存储加载收藏的句子
         function loadFavorites() {
-            return localStorage.getItem('favorite-hitokoto') || [];
+            return utools.dbStorage.getItem('favorite-hitokoto') || [];
         }
 
         // 保存收藏的句子到本地存储
         function saveFavorites(favorites) {
-            localStorage.setItem('favorite-hitokoto', favorites);
+            utools.dbStorage.setItem('favorite-hitokoto', favorites);
         }
 
         // 更新收藏按钮状态
